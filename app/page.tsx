@@ -10,10 +10,45 @@ import SkillsCard from "./components/SkillsCard";
 import SplitGlassCard from "./components/SplitGlassCard";
 import TargetCursor from "./components/TargetCursor";
 import HeroGlassCard from "./components/HeroGlassCard";
-import { Linkedin, Mail, Twitter, Instagram, Github, Heart } from 'lucide-react';
+import { Linkedin, Mail, Twitter, Github, Heart } from 'lucide-react';
 import Link from "next/link";
 
 gsap.registerPlugin(ScrollTrigger);
+
+type ProjectConfig = {
+  id: string;
+  title: string;
+  image: string;
+  tagline: string;
+  description: string;
+};
+
+const PROJECTS: ProjectConfig[] = [
+  {
+    id: "collab-board",
+    title: "CollabBoard",
+    image: "/collabBoardImg.png",
+    tagline: "Realtime whiteboard for remote sprints",
+    description:
+      "Collaborative canvas with synced cursors, sticky notes, and secure invite links so distributed teams can brainstorm together.",
+  },
+  {
+    id: "wrytr",
+    title: "Wrytr",
+    image: "/wrytrImg.png",
+    tagline: "AI-assisted editor for content teams",
+    description:
+      "An AI-first editor that generates outlines, tone suggestions, and CMS-ready exports to keep marketing teams shipping faster.",
+  },
+  {
+    id: "sensai",
+    title: "SensAI",
+    image: "/sensaiImg.png",
+    tagline: "Adaptive learning coach for makers",
+    description:
+      "A modular learning tracker that blends bite-sized lessons with actionable feedback to help creatives level up consistently.",
+  },
+];
 
 export default function Home() {
   const slideTop = useRef<HTMLDivElement>(null);
@@ -33,9 +68,9 @@ export default function Home() {
   const introRef = useRef<DecryptHandle>(null);
   const decryptSkillsRef = useRef<DecryptHandle>(null);
   const decryptProjectsRef = useRef<DecryptHandle>(null);
-  const decryptCollabBoardDescRef = useRef<DecryptHandle>(null);
-  const decryptWrytrDescRef = useRef<DecryptHandle>(null);
-  const decryptSensaiDescRef = useRef<DecryptHandle>(null);
+  const projectDescriptionRefs = useRef<Array<DecryptHandle | null>>([]);
+
+  projectDescriptionRefs.current.length = PROJECTS.length;
 
   const tlRef = useRef<gsap.core.Timeline | null>(null);
   const heroIntroTlRef = useRef<gsap.core.Timeline | null>(null);
@@ -223,55 +258,67 @@ const scrollToEl = (el: HTMLElement | null) => {
   );
 
   // Projects section animation
-  useGSAP(() => {
-  const section = projectsSectionRef.current;
-  if (!section) return;
+  useGSAP(
+    () => {
+      const section = projectsSectionRef.current;
+      if (!section) return;
 
-  const cards = gsap.utils.toArray<HTMLElement>(".project-card", section);
+      const cards = gsap.utils.toArray<HTMLElement>(".project-card", section);
 
-  gsap.set(cards, {
-    opacity: 0,
-    z: 100,
-    rotationY: -90,
-    transformPerspective: 800,
-    transformOrigin: "left center",
-  });
+      gsap.set(cards, {
+        opacity: 0,
+        y: 64,
+        scale: 0.92,
+        willChange: "transform, opacity",
+      });
 
-  const tl = gsap.timeline({ paused: true });
+      const tl = gsap.timeline({ paused: true });
 
-  tl.call(() => {
-    if (decryptProjectsRef.current) decryptProjectsRef.current.play();
-  });
+      tl.call(() => {
+        decryptProjectsRef.current?.play();
+      });
 
-  tl.fromTo(cards, { opacity: 0, z: 100, rotationY: -90 }, {
-    opacity: 1,
-    z: 0,
-    rotationY: 0,
-    ease: "power2.out",
-    stagger: 0.25,
-    duration: 1.2,
-  });
+      tl.to(
+        cards,
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          ease: "power3.out",
+          duration: 0.9,
+          stagger: 0.2,
+        },
+        0
+      );
 
-  tl.call(() => {
-    decryptCollabBoardDescRef.current?.play();
-    decryptWrytrDescRef.current?.play();
-    decryptSensaiDescRef.current?.play();
-  }, undefined, "+=0.5");
+      tl.call(
+        () => {
+          projectDescriptionRefs.current.forEach((ref) => ref?.play());
+        },
+        undefined,
+        "-=0.4"
+      );
 
-  const st = ScrollTrigger.create({
-    trigger: section,
-    start: "top 80%",
-    onEnter: () => {
-      console.log("Projects scroll trigger fired");
-      tl.play(0);
+      tl.call(() => {
+        cards.forEach((card) => card.style.removeProperty("will-change"));
+      });
+
+      const st = ScrollTrigger.create({
+        trigger: section,
+        start: "top 75%",
+        once: true,
+        onEnter: () => {
+          tl.play(0);
+        },
+      });
+
+      return () => {
+        st.kill();
+        tl.kill();
+      };
     },
-  });
-
-  return () => {
-    st.kill();
-    tl.kill();
-  };
-}, { scope: projectsSectionRef });
+    { scope: projectsSectionRef }
+  );
 
 
   // Loading progress
@@ -459,48 +506,47 @@ const scrollToEl = (el: HTMLElement | null) => {
         <div
           id="projects"
           ref={projectsSectionRef}
-          className="px-10 w-screen h-screen flex flex-col justify-center gap-10 perspective-[1000px]"
+          className="px-10 w-screen min-h-screen flex flex-col justify-center gap-16"
         >
           <DecryptingTypewriter
             ref={decryptProjectsRef}
             text="//:Projects"
             perChar={0.1}
             scramblePhase={0.6}
-            className="w-screen tracking-widest text-2xl flex justify-end pr-50 "
+            className="w-full tracking-widest text-2xl flex justify-end"
           />
-          <div className="flex flex-wrap gap-10 justify-start mt-30">
-            <SplitGlassCard className=" project-card w-[300px] h-[400px]">
-              <img src="/collabBoardImg.png" alt="" className="h-[130px] top-2" />
-              <DecryptingTypewriter
-                ref={decryptCollabBoardDescRef}
-                text="//:Projects"
-                perChar={0.1}
-                scramblePhase={0.6}
-                className="w-screen tracking-widest text-2xl flex justify-end pr-50 "
-              />
-            </SplitGlassCard>
-
-            <SplitGlassCard className=" project-card w-[300px] h-[400px]">
-              <img src="/wrytrImg.png" alt="" />
-              <DecryptingTypewriter
-                ref={decryptWrytrDescRef}
-                text="//:Projects"
-                perChar={0.1}
-                scramblePhase={0.6}
-                className="text-white w-screen tracking-widest text-2xl flex justify-end pr-50 "
-              />
-            </SplitGlassCard>
-
-            <SplitGlassCard className=" project-card w-[300px] h-[400px]">
-              <img src="/sensaiImg.png" alt="" />
-              <DecryptingTypewriter
-                ref={decryptSensaiDescRef}
-                text="//:Projects"
-                perChar={0.1}
-                scramblePhase={0.6}
-                className="w-screen tracking-widest text-2xl flex justify-end pr-50 "
-              />
-            </SplitGlassCard>
+          <div className="mx-auto grid w-full max-w-6xl gap-10 justify-items-center md:grid-cols-2 xl:grid-cols-3">
+            {PROJECTS.map((project, index) => (
+              <SplitGlassCard
+                key={project.id}
+                className="project-card w-full max-w-[320px] min-h-[420px]"
+              >
+                <div className="flex h-full flex-col gap-6">
+                  <div className="aspect-video overflow-hidden rounded-2xl bg-white/10">
+                    <img
+                      src={project.image}
+                      alt={project.title}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <h3 className="text-lg font-semibold uppercase tracking-[0.35em]">
+                    {project.title}
+                  </h3>
+                  <DecryptingTypewriter
+                    ref={(handle) => {
+                      projectDescriptionRefs.current[index] = handle;
+                    }}
+                    text={project.tagline}
+                    perChar={0.08}
+                    scramblePhase={0.5}
+                    className="text-xs uppercase tracking-[0.45em] text-white/70"
+                  />
+                  <p className="text-sm leading-relaxed text-white/70">
+                    {project.description}
+                  </p>
+                </div>
+              </SplitGlassCard>
+            ))}
           </div>
         </div>
 
