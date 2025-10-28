@@ -11,6 +11,7 @@ import SplitGlassCard from "./components/SplitGlassCard";
 import TargetCursor from "./components/TargetCursor";
 import HeroGlassCard from "./components/HeroGlassCard";
 import { Linkedin, Mail, Twitter, Instagram, Github, Heart } from 'lucide-react';
+import Link from "next/link";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -50,6 +51,8 @@ export default function Home() {
   // stable ticker callback reference for cleanup
   const tickerRef = useRef<((time: number) => void) | null>(null);
 
+  
+
   // Manage body overflow for overlay
   useEffect(() => {
     if (overlayVisible) {
@@ -68,13 +71,12 @@ export default function Home() {
 
   // Lenis Smooth Scroll Setup with stable gsap.ticker
   useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-      syncTouch: false,
-      anchors: true, // let Lenis handle anchors
-    });
+const lenis = new Lenis({
+  duration: 1.2,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
+  syncTouch: false,
+});
 
     lenisRef.current = lenis;
 
@@ -112,14 +114,39 @@ export default function Home() {
     }
   }, [overlayVisible]); // [web:5]
 
+  
+
   // helper for nav scrolls
-  const scrollToEl = (el: HTMLElement | null) => {
-    const lenis = lenisRef.current;
-    if (!el || !lenis) return;
-    // ensure Lenis is running; if not, force the scroll
-    const options = { offset: -80, duration: 1.2, force: true as const };
-    lenis.scrollTo(el, options);
-  }; // [web:5]
+const scrollToEl = (el: HTMLElement | null) => {
+  const lenis = lenisRef.current;
+  console.log("scrollToEl called:", { el, overlayVisible, lenisExists: !!lenis });
+
+  if (!el) {
+    console.warn("scrollToEl: target element is null");
+    return;
+  }
+  if (!lenis) {
+    console.warn("scrollToEl: lenis not initialized yet");
+    return;
+  }
+
+  // Build a selector if the element has an id (more reliable across frames)
+  const target: string | HTMLElement = el.id ? `#${el.id}` : el;
+
+  // Ensure Lenis is running
+  lenis.start();
+
+  // Small timeout to let Lenis start/raf run at least once
+  setTimeout(() => {
+    console.log("lenis.scrollTo ->", target);
+    try {
+      // lenis.scrollTo accepts selector, number or element
+      lenis.scrollTo(target as string | HTMLElement, { offset: -10, duration: 1.2 });
+    } catch (err) {
+      console.error("lenis.scrollTo error:", err);
+    }
+  }, 50);
+};
 
   // Hero intro timeline
   useGSAP(
@@ -196,68 +223,56 @@ export default function Home() {
   );
 
   // Projects section animation
-  useGSAP(
-    () => {
-      const section = projectsSectionRef.current;
-      if (!section) return;
+  useGSAP(() => {
+  const section = projectsSectionRef.current;
+  if (!section) return;
 
-      const cards = gsap.utils.toArray<HTMLElement>(".project-card", section);
+  const cards = gsap.utils.toArray<HTMLElement>(".project-card", section);
 
-      gsap.set(cards, {
-        opacity: 0,
-        z: 100,
-        rotationY: -90,
-        transformPerspective: 800,
-        transformOrigin: "left center",
-      });
+  gsap.set(cards, {
+    opacity: 0,
+    z: 100,
+    rotationY: -90,
+    transformPerspective: 800,
+    transformOrigin: "left center",
+  });
 
-      const tl = gsap.timeline({ paused: true });
+  const tl = gsap.timeline({ paused: true });
 
-      tl.call(() => decryptProjectsRef.current?.play());
+  tl.call(() => {
+    if (decryptProjectsRef.current) decryptProjectsRef.current.play();
+  });
 
-      tl.fromTo(
-        cards,
-        { opacity: 0, z: 100, rotationY: -90 },
-        {
-          opacity: 1,
-          z: 0,
-          rotationY: 0,
-          ease: "power2.out",
-          stagger: 0.25,
-          duration: 1.2,
-        },
-        "+=1"
-      );
+  tl.fromTo(cards, { opacity: 0, z: 100, rotationY: -90 }, {
+    opacity: 1,
+    z: 0,
+    rotationY: 0,
+    ease: "power2.out",
+    stagger: 0.25,
+    duration: 1.2,
+  });
 
-      tl.call(() => {
-        decryptCollabBoardDescRef.current?.play();
-      }, undefined, "+=0.2");
-      tl.call(() => {
-        decryptWrytrDescRef.current?.play();
-      }, undefined, "+=0.2");
-      tl.call(() => {
-        decryptSensaiDescRef.current?.play();
-      }, undefined, "+=0.2");
+  tl.call(() => {
+    decryptCollabBoardDescRef.current?.play();
+    decryptWrytrDescRef.current?.play();
+    decryptSensaiDescRef.current?.play();
+  }, undefined, "+=0.5");
 
-      const st = ScrollTrigger.create({
-        trigger: section,
-        start: "top 80%",
-        onEnter: () => tl.play(0),
-        onEnterBack: () => tl.play(0),
-        onLeaveBack: () => {
-          tl.pause(0);
-          gsap.set(cards, { opacity: 0, z: 100, rotationY: -90 });
-          decryptProjectsRef.current?.reverse?.();
-        },
-      });
-
-      return () => {
-        tl.kill();
-        st.kill();
-      };
+  const st = ScrollTrigger.create({
+    trigger: section,
+    start: "top 80%",
+    onEnter: () => {
+      console.log("Projects scroll trigger fired");
+      tl.play(0);
     },
-    { scope: projectsSectionRef }
-  );
+  });
+
+  return () => {
+    st.kill();
+    tl.kill();
+  };
+}, { scope: projectsSectionRef });
+
 
   // Loading progress
   useEffect(() => {
@@ -313,35 +328,52 @@ export default function Home() {
         }`}
       >
         {/* Inline nav using Lenis programmatic scroll */}
-        <div className="w-full flex justify-end px-8 py-4 top-0 z-50 ">
-          <div className="inline-flex gap-6 px-6 py-3 backdrop-blur-md bg-white/5 border border-white/10 top-0 -skew-x-12">
+        <div className="w-full flex justify-end px-8 py-4 top-0 z-[100] ">
+          <div className="inline-flex gap-6 px-6 py-3 backdrop-blur-md bg-white/5 border border-white/10 top-0 -skew-x-12 relative z-[100]">
             <button
-              onClick={() => scrollToEl(heroSectionRef.current)}
-              className="text-white hover:text-white/70 transition-colors tracking-widest skew-x-12"
+              onClick={() => {
+                console.log("About clicked");
+                scrollToEl(heroSectionRef.current);
+              }}
+              className="text-white hover:text-white/70 transition-colors tracking-widest skew-x-12 cursor-pointer relative z-[100]"
             >
               [About]
             </button>
             <button
-              onClick={() => scrollToEl(skillsSectionRef.current)}
-              className="text-white hover:text-white/70 transition-colors tracking-widest skew-x-12"
+              onClick={() => {
+                console.log("Skills clicked");
+                scrollToEl(skillsSectionRef.current);
+              }}
+              className="text-white hover:text-white/70 transition-colors tracking-widest skew-x-12 cursor-pointer relative z-[100]"
             >
               [Skills]
             </button>
             <button
-              onClick={() => scrollToEl(projectsSectionRef.current)}
-              className="text-white hover:text-white/70 transition-colors tracking-widest skew-x-12"
+              onClick={() => {
+                console.log("Projects clicked");
+                scrollToEl(projectsSectionRef.current);
+              }}
+              className="text-white hover:text-white/70 transition-colors tracking-widest skew-x-12 cursor-pointer relative z-[100]"
             >
               [Projects]
             </button>
             <button
-              onClick={() => scrollToEl(contactSectionRef.current)}
-              className="text-white hover:text-white/70 transition-colors tracking-widest skew-x-12"
+              onClick={() => {
+                console.log("Contact clicked");
+                scrollToEl(contactSectionRef.current);
+              }}
+              className="text-white hover:text-white/70 transition-colors tracking-widest skew-x-12 cursor-pointer relative z-[100]"
             >
               [Contact]
             </button>
-            <button className="text-white hover:text-white/70 transition-colors tracking-widest skew-x-12">
+            <Link
+              href="https://google.com"
+              target="_blank"
+              rel="noopener noreferrer"       
+              className="text-white hover:text-white/70 transition-colors tracking-widest skew-x-12 cursor-pointer relative z-[100]"
+            >
               [Resume]
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -363,10 +395,10 @@ export default function Home() {
                   <div className="flex flex-col items-start justify-center gap-4 text-left max-w-[500px] md:max-w-[600px]">
                     <DecryptingTypewriter
                       ref={introRef}
-                      text="Hi, I am retgeyhet"
-                      perChar={0.1}
+                      text="Hi, I’m Anusha — a coder who loves turning ideas into clean, functional code."
+                      perChar={0.09}
                       scramblePhase={0.6}
-                      className="text-4xl md:text-5xl lg:text-7xl text-white font-light leading-tight"
+                      className="text-2xl md:text-2xl lg:text-3xl text-white font-light leading-tight"
                     />
                   </div>
 
@@ -455,7 +487,7 @@ export default function Home() {
                 text="//:Projects"
                 perChar={0.1}
                 scramblePhase={0.6}
-                className="w-screen tracking-widest text-2xl flex justify-end pr-50 "
+                className="text-white w-screen tracking-widest text-2xl flex justify-end pr-50 "
               />
             </SplitGlassCard>
 
@@ -547,7 +579,10 @@ export default function Home() {
           {/* Footer */}
           <div className="w-full  py-6 px-8">
             <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-white text-xs tracking-wider">
-              <div className="flex items-center gap-2">
+              <div               onClick={() => {
+                console.log("Contact clicked");
+                scrollToEl(heroSectionRef.current);
+              }}  className="flex items-center gap-2">
                 <span>^</span>
                 <span>SCROLL TO TOP AND LIVE AGAIN</span>
               </div>
