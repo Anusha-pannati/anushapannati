@@ -45,14 +45,14 @@ export default function SkillsCard({ className = '', children }: Props) {
           ring-1 ring-inset ring-white/20
           shadow-none
         "
-        style={{ clipPath: clip as any }}
+        style={{ clipPath: clip as React.CSSProperties['clipPath'] }}
       />
 
       {/* Scanline overlay (monochrome) */}
       <div
         className="absolute inset-0 pointer-events-none opacity-60"
         style={{
-          clipPath: clip as any,
+          clipPath: clip as React.CSSProperties['clipPath'],
           background:
             // horizontal scanlines, 2px line + 4px gap, grayscale only
             'repeating-linear-gradient(0deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 2px, rgba(0,0,0,0) 2px, rgba(0,0,0,0) 6px)',
@@ -63,7 +63,7 @@ export default function SkillsCard({ className = '', children }: Props) {
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          clipPath: clip as any,
+          clipPath: clip as React.CSSProperties['clipPath'],
           background:
             'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 35%, rgba(0,0,0,0.12) 100%)',
           boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.20)',
@@ -98,7 +98,7 @@ export default function SkillsCard({ className = '', children }: Props) {
       {/* Content slot */}
       <div
         className="absolute inset-0 p-8 text-white"
-        style={{ clipPath: clip as any }}
+        style={{ clipPath: clip as React.CSSProperties['clipPath'] }}
       >
         {children}
       </div>
@@ -107,7 +107,7 @@ export default function SkillsCard({ className = '', children }: Props) {
       <div
         className="absolute inset-0 -z-10 opacity-35"
         style={{
-          clipPath: clip as any,
+          clipPath: clip as React.CSSProperties['clipPath'],
           transform: 'scale(1.02)',
           background:
             'radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,0.08), rgba(255,255,255,0) 70%)',

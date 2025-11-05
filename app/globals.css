@@ -65,8 +65,17 @@
     src: local('Terminal'), url('https://fonts.cdnfonts.com/s/83558/Terminal.woff') format('woff');
 }
 
+@font-face {
+    font-family: 'Gixel';
+    font-style: normal;
+    font-weight: 500;
+    src: local('Gixel'), url('https://fonts.cdnfonts.com/s/102561/Gixel.woff') format('woff');
+}
+
+
 body{
     font-family: 'Terminal', sans-serif;
+    font-family: 'Gixel', sans-serif;
 }
 
 :root {
@@ -153,6 +162,12 @@ body{
   }
   .hide-backface {
     backface-visibility: hidden;
+  }
+}
+
+@layer utilities {
+  .font-terminal {
+    font-family: 'Terminal', monospace;
   }
 }
 

@@ -27,7 +27,7 @@ interface DecryptingTypewriterProps {
 
 const DEFAULT_CHARS = "!<>-_\\/[]{}—=+*^?#_";
 
-export const DecryptingTypewriter = forwardRef<DecryptHandle, DecryptingTypewriterProps>(
+const DecryptingTypewriter = forwardRef<DecryptHandle, DecryptingTypewriterProps>(
   (
     {
       text,
@@ -106,5 +106,7 @@ export const DecryptingTypewriter = forwardRef<DecryptHandle, DecryptingTypewrit
     );
   }
 );
+
+DecryptingTypewriter.displayName = "DecryptingTypewriter";
 
 export default DecryptingTypewriter;
